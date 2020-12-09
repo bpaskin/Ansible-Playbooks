@@ -15,4 +15,4 @@ hostAndPorts:
 ```
 
 In the above, the following URLs will be checked :
-`https://my1.server.com:19445/myURI1`, `https://my1.server.com:19445/pizza`, `https://my1.server.com:19445/myWebApp`, `https://my1.server.com:19446/myURI1`, `https://my1.server.com:19446/pizza`, `https://my1.server.com:19446/myWebApp, `https://my2.server.com:19445/myURI1`, `https://my2.server.com:19445/pizza`, `https://my2.server.com:19445/myWebApp`, `https://my2.server.com:19446/myURI1`, `https://my2.server.com:19446/pizza`, `https://my2.server.com:19446/myWebApp`
+`https://my1.server.com:19445/myURI1`, `https://my1.server.com:19445/pizza`, `https://my1.server.com:19445/myWebApp`, `https://my1.server.com:19446/myURI1`, `https://my1.server.com:19446/pizza`, `https://my1.server.com:19446/myWebApp`, `https://my2.server.com:19445/myURI1`, `https://my2.server.com:19445/pizza`, `https://my2.server.com:19445/myWebApp`, `https://my2.server.com:19446/myURI1`, `https://my2.server.com:19446/pizza`, `https://my2.server.com:19446/myWebApp`
