@@ -1,0 +1,15 @@
+  - name: Check Applications
+    hosts: 
+      - all
+    become: yes
+    become_method: sudo
+   
+    tasks:
+    - name: Check URLs and URIs for HTTP Status of 200 (OK)
+      uri:
+        url: "https://{{ item[0] }}/{{ item[1] }}"
+        method: GET
+        status_code: [200]
+      with_nested: 
+        - "{{ hostAndPorts }}"
+        - "{{ URIs }}"
