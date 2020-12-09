@@ -1,0 +1,26 @@
+  - name: Liberty Compliance Check
+    hosts: 
+      - all
+    become: yes
+    become_method: sudo
+   
+    tasks:
+
+    - name: copy over the script
+      copy:
+        src: checkLibertyCompliance.sh
+        dest: ~wsadmin/scripts/checkLibertyCompliance.sh
+        owner: wsadmin
+        group: wsadm 
+        mode: '0750'
+
+    - name: Using shell module
+      shell: "./checkLibertyCompliance.sh > {{ inventory_hostname }}_checkCompliance.log"
+      args:
+        chdir: ~wsadmin/scripts/
+
+    - name: Upload the results to Control Server
+      fetch:
+        src: "~wsadmin/scripts/{{ inventory_hostname }}_checkCompliance.log"
+        dest: "/tmp/{{ inventory_hostname }}_checkCompliance.log"
+        flat: yes
