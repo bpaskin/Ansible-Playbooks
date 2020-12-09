@@ -1,0 +1,73 @@
+    - name: download liberty
+      get_url:
+        url: https://my.server.com/liberty/wlp-{{ version }}-{{ level }}-{{ ansible_system | lower }}-{{ ansible_architecture | lower }}.tar.gz
+        dest: /usr/WebSphere/versions/wlp.tar.gz
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+
+    - name: expand file.  Gnu Gzip may not be installed on AIX so not able to use unarchive
+      command: gzip -d /usr/WebSphere/versions/wlp.tar.gz
+      
+    - name: uncompress file
+      command: tar -xf /usr/WebSphere/versions/wlp.tar -C /usr/WebSphere/versions/
+     
+    - name: delete the wlp dir, if it exists
+      file: 
+        path: /usr/WebSphere/versions/wlp-{{ version }}-{{ level }}
+        state: absent
+        
+    - name: rename directory
+      command: mv -f /usr/WebSphere/versions/wlp /usr/WebSphere/versions/wlp-{{ version }}-{{ level }}
+
+    - name: delete the compressed file
+      file:
+        path: /usr/WebSphere/versions/wlp.tar
+        state: absent
+  
+    - name: delete the wlp link
+      file:
+        path: /usr/WebSphere/wlp
+        state: absent
+        
+    - name: create symlink
+      file:
+        src: /usr/WebSphere/versions/wlp-{{ version }}-{{ level }}
+        dest: /usr/WebSphere/wlp
+        state: link
+        owner: wsadmin
+        group: wsadm 
+        
+    - name: delete the resource folders, if they exsit
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /usr/WebSphere/wlp/usr/shared/resources/jdbc.{{ ansible_date_time.date }}
+        - /usr/WebSphere/wlp/usr/shared/resources/mq.{{ ansible_date_time.date }}
+     
+    - name: rename jdbc dir
+      command: mv -f /usr/WebSphere/usr/shared/resources/jdbc /usr/WebSphere/usr/shared/resources/jdbc.{{ ansible_date_time.date }}
+      
+    - name: rename mq dir
+      command: mv -f /usr/WebSphere/usr/shared/resources/mq /usr/WebSphere/usr/shared/resources/mq.{{ ansible_date_time.date }}
+      
+    - name: copy new jdbc dir
+      copy: 
+        src: /usr/WebSphere/wlp/usr/shared/resources/jdbc
+        dest: /usr/WebSphere/usr/shared/resources/
+        remote_src: yes 
+        directory_mode: yes
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+      
+    - name: copy new mq dir
+      copy: 
+        src: /usr/WebSphere/wlp/usr/shared/resources/mq
+        dest: /usr/WebSphere/usr/shared/resources/
+        remote_src: yes 
+        directory_mode: yes
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'

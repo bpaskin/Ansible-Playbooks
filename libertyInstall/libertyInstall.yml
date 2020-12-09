@@ -1,0 +1,73 @@
+  - name: Install Liberty
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+ 
+    - name: check if liberty exists wlp dir
+      stat:
+        path: /usr/WebSphere/wlp
+      register: wlp_details
+    - fail:
+        msg: "Liberty may already exist on system"
+      when: wlp_details.stat.exists
+
+    - name: check if liberty exists usr dir
+      stat:
+        path: /usr/WebSphere/usr
+      register: usr_details
+    - fail:
+        msg: "Liberty may already exist on system"
+      when: usr_details.stat.exists
+      
+    - name: mkdir versions dir
+      file:
+        path: /usr/WebSphere/versions
+        state: directory
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+    
+    - name: check if AIX and set ppc64
+      set_fact:
+        ansible_architecture: "ppc64"
+      when: ansible_system == "AIX" and ansible_architecture == "chrp"
+      
+    - name: check if Linux and set ppc64le
+      set_fact: 
+        ansible_architecture: "ppc64le"
+      when: ansible_system == "Linux" and ansible_architecture == "chrp"
+        
+    - name: download liberty
+      get_url:
+        url: https://my.server.com/liberty/wlp-{{ version }}-{{ level }}-{{ ansible_system | lower }}-{{ ansible_architecture | lower }}.tar.gz
+        dest: /usr/WebSphere/versions/wlp.tar.gz
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+
+    - name: expand file.  Gnu Gzip may not be installed on AIX so not able to use unarchive
+      command: gzip -d /usr/WebSphere/versions/wlp.tar.gz
+      
+    - name: uncompress file
+      command: tar -xf /usr/WebSphere/versions/wlp.tar -C /usr/WebSphere/versions/
+     
+    - name: rename directory
+      command: mv /usr/WebSphere/versions/wlp /usr/WebSphere/versions/wlp-{{ version }}-{{ level }}
+
+    - name: delete the compressed file
+      file:
+        path: /usr/WebSphere/versions/wlp.tar
+        state: absent
+
+    - name: create symlink
+      file:
+        src: /usr/WebSphere/versions/wlp-{{ version }}-{{ level }}
+        dest: /usr/WebSphere/wlp
+        state: link
+
+    - name: move the usr directory to regular path
+      command: mv /usr/WebSphere/wlp/usr /usr/WebSphere/

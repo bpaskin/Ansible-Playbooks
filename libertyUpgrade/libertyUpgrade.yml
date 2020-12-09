@@ -1,0 +1,44 @@
+  - name: Update Liberty
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+ 
+    - name: check if liberty exists link or dir
+      stat:
+        path: /usr/WebSphere/wlp
+      register: wlp_details
+    - fail:
+        msg: "Liberty may not be installed on the system"
+      when: not wlp_details.stat.exists
+
+    - name: check if AIX and set ppc64
+      set_fact:
+        ansible_architecture: "ppc64"
+      when: ansible_system == "AIX" and ansible_architecture == "chrp"
+      
+    - name: check if Linux and set ppc64le
+      set_fact: 
+        ansible_architecture: "ppc64le"
+      when: ansible_system == "Linux" and ansible_architecture == "chrp"
+
+    - name: Check if the usr dir exists
+      stat:
+        path: /usr/WebSphere/usr
+      register: usr_dir
+      
+    - name: Check if the versions dir exists
+      stat:
+        path: /usr/WebSphere/versions
+      register: versions_dir
+
+    - name: Go to versions upgrade 
+      import_tasks: upgrade.yml
+      when:  usr_dir.stat.exists and versions_dir.stat.exists
+
+    - name: Go to in place upgrade
+      import_tasks: inPlaceUpgrade.yml
+      when: not usr_dir.stat.exists or not versions_dir.stat.exists 
