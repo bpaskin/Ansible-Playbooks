@@ -1,0 +1,27 @@
+  - name: Start all liberty servers
+    hosts: 
+      - all
+    become: yes
+    become_method: sudo
+   
+    tasks:
+    - name: check if liberty exists wlp dir
+      stat:
+        path: /usr/WebSphere/wlp
+      register: wlp_details
+    - fail:
+        msg: "Liberty may not exist on system"
+      when: not wlp_details.stat.exists
+
+    - name: Find servers
+      find:
+        paths: ["/usr/WebSphere/usr/servers", "/usr/WebSphere/wlp/usr/servers"]
+        file_type: directory
+      register: servers
+
+    - name: Start servers
+      command: su - wsadmin -c "/usr/WebSphere/wlp/bin/server start {{ item.path | basename }}"
+      with_items: 
+        - "{{ servers.files }}"
+      ignore_errors: yes
+      
