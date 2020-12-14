@@ -1,0 +1,1 @@
+These playbooks stop or start all app servers on a system.  They search specific directories for server directories and then takes the action.  Since the customer I wrote these for a customer that did not allow certain activities a `su - user` is required instead of `become_user`, which is preferred.  There are no parameters necessary.
