@@ -1,0 +1,89 @@
+  - name: Install Installation Manager
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+ 
+    - name: check if the Installation exists
+      find:
+        paths: '/usr/WebSphere/InstallationManager/'
+        recurse: True
+      register: im_stats
+    - fail:
+        msg: 'Installation Manager may already be installed.'
+      when: im_stats.matched > 0
+
+    - name: check if the tmp dir exists
+      find:
+        paths: '/usr/WebSphere/tmp'
+      register: tmp_stats
+
+    - name: mkdir tmp dir for downloading IM
+      file:
+        path: /usr/WebSphere/tmp
+        state: directory
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+      when: tmp_stats.matched == 0
+    
+    - name: check if AIX and set ppc64
+      set_fact:
+        ansible_architecture: "ppc"
+      when: ansible_system == "AIX" and ansible_architecture == "chrp"
+      
+    - name: check if Linux and set ppc64le
+      set_fact: 
+        ansible_architecture: "ppc64le"
+      when: ansible_system == "Linux" and ansible_architecture == "chrp"
+      
+    - name: check if Linux on PPC64 set ppc
+      set_fact:
+        ansible_architecture: "ppc"
+      when: ansible_architecture == "ppc64"       
+      
+    - name: download IM
+      get_url:
+        url: https://va10tlvwbs329.wellpoint.com:8080/liberty/IM/agent.installer.{{ ansible_system | lower }}.gtk.{{ ansible_architecture | lower }}_{{ version }}.zip
+        dest: /usr/WebSphere/tmp/im.zip
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+
+    - name: unpack IM
+      unarchive:
+        src: /usr/WebSphere/tmp/im.zip
+        dest: /usr/WebSphere/tmp/
+        remote_src: True
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+
+    - name: Install IM
+      command: su - wsadmin -c "/usr/WebSphere/tmp/userinstc -acceptLicense -dataLocation /usr/WebSphere/IBMIMDL -installationDirectory /usr/WebSphere/InstallationManager"
+
+    - name: check if the jre directory
+      find:
+        paths: '/usr/WebSphere/InstallationManager/eclipse'
+        patterns: 'jre_*'
+        recurse: True
+        file_type: directory
+      register: jre_stats
+      
+    - name: download cacerts file
+      get_url:
+        url: https://va10tlvwbs329.wellpoint.com:8080/liberty/IM/cacerts
+        dest: /usr/WebSphere/InstallationManager/eclipse/{{ item.path | basename }}/jre/lib/security/cacerts
+        owner: wsadmin
+        group: wsadm 
+        mode: '0755'
+      with_items: 
+        - "{{ jre_stats.files }}"
+
+    - name: Remove tmp directory
+      file:
+        path: /usr/WebSphere/tmp
+        state: absent
