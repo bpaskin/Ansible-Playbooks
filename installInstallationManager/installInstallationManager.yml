@@ -47,7 +47,7 @@
       
     - name: download IM
       get_url:
-        url: https://va10tlvwbs329.wellpoint.com:8080/liberty/IM/agent.installer.{{ ansible_system | lower }}.gtk.{{ ansible_architecture | lower }}_{{ version }}.zip
+        url: https://my.server.com/liberty/IM/agent.installer.{{ ansible_system | lower }}.gtk.{{ ansible_architecture | lower }}_{{ version }}.zip
         dest: /usr/WebSphere/tmp/im.zip
         owner: wsadmin
         group: wsadm 
@@ -75,7 +75,7 @@
       
     - name: download cacerts file
       get_url:
-        url: https://va10tlvwbs329.wellpoint.com:8080/liberty/IM/cacerts
+        url: https://my.server.com/liberty/IM/cacerts
         dest: /usr/WebSphere/InstallationManager/eclipse/{{ item.path | basename }}/jre/lib/security/cacerts
         owner: wsadmin
         group: wsadm 
