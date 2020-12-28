@@ -1,0 +1,16 @@
+  - name: Install Traditional WebSphere Application Server 
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+
+    - name: Install tWAS and Java
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.{{ editionWAS }}.v{{ versionWAS }} com.ibm.java.jdk.v{{ versionJava }} -repositories https://my.server.com/ -installationDirectory /usr/WebSphere/{{ AppServerDir }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: versionJava != None
+
+    - name: Install tWAS 
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.{{ editionWAS }}.v{{ versionWAS }} -repositories https://my.server.com/ -installationDirectory /usr/WebSphere/{{ AppServerDir }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: versionJava == None
