@@ -1,0 +1,29 @@
+  - name: Install/Upgrade IHS
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+
+    - name: check if IHS currently exists on the system
+      stat:
+        path: '{{ IHS_DIR }}/version.signature'
+      register: exists_IHS
+
+    - name: Upgrade IHS and Java
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.IHS.v{{ versionIHS }} com.ibm.java.jdk.v{{ versionJava }} -repositories https://my.server.com/ -installationDirectory {{ IHS_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: exists_IHS.stat.exists == True and versionJava != None 
+
+    - name: Upgrade IHS 
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.IHS.v{{ versionIHS }} -repositories https://my.server.com/ -installationDirectory {{ IHS_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: exists_IHS.stat.exists == True and versionJava == None
+
+    - name: Install IHS and Java
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.IHS.v{{ versionIHS }} com.ibm.java.jdk.v{{ versionJava }} -repositories https://my.server.com/ -installationDirectory {{ IHS_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -properties user.ihs.allowNonRootSilentInstall=true,user.ihs.httpPort=80 -acceptLicense'
+      when: exists_IHS.stat.exists != True and versionJava != None 
+
+    - name: Install IHS 
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.IHS.v{{ versionIHS }} -repositories https://my.server.com/ -installationDirectory {{ IHS_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -properties user.ihs.allowNonRootSilentInstall=true,user.ihs.httpPort=80 -acceptLicense'
+      when: exists_IHS.stat.exists != True and versionJava == None

@@ -1,0 +1,16 @@
+  - name: Install/Upgrade the IBM WebSphere Plugin
+    hosts: 
+      - all
+    gather_facts: True
+    become: yes
+    become_method: sudo
+   
+    tasks:
+
+    - name: Upgrade Plugin and Java
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.PLG.v{{ versionPLG }} com.ibm.java.jdk.v{{ versionJava }} -repositories https://my.server.com/ -installationDirectory {{ PLG_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: versionJava != None 
+
+    - name: Upgrade Plugin 
+      command: su - wsadmin -c '/usr/WebSphere/InstallationManager/eclipse/tools/imcl install com.ibm.websphere.PLG.v{{ versionPLG }} -repositories https://my.server.com/ -installationDirectory {{ PLG_DIR }} -sharedResourcesDirectory /usr/WebSphere/IMShared -acceptLicense'
+      when: versionJava == None
