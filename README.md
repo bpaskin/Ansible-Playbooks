@@ -7,3 +7,5 @@ The playbooks are usually being run from an Ansible Tower, but not a necessity, 
 It should be noted that Liberty is prepackaged with customer specific elements and downloaded internally.  These are just samples to help others who may need some help.
 
 Brian (9 Dicembre 2020)
+
+The createLibertyBundles is how certain customers bundle Liberty with Java and JDBC/MQ driver, etc.
