@@ -1,0 +1,5 @@
+<server description="base">
+
+        <include location="${shared.config.dir}/server.xml" optional="false" onConflict="MERGE"/>
+
+</server>

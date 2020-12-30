@@ -1,0 +1,79 @@
+<server description="Standard">
+
+	<featureManager>
+		<feature>appSecurity-2.0</feature>
+		<feature>ldapRegistry-3.0</feature>
+		<feature>restConnector-2.0</feature>
+		<feature>transportSecurity-1.0</feature>
+		<feature>monitor-1.0</feature>
+	</featureManager>
+
+	<!-- Change these for each server -->
+        <variable name="APP_SERVER_NAME" value="${bootstrap.server.name}" />
+        <variable name="HOST" value="${bootstrap.host.name}" />
+        <variable name="wmqJmsClient.rar.location" value="${shared.resource.dir}/mq/wmq.jmsra.rar" />
+
+        <!-- Used for only single servers.  Comment out for Collective Member-->
+        <!--
+                     <featureManager>
+                <feature>adminCenter-1.0</feature>
+        </featureManager>
+
+        <administrator-role>
+                <group>WASAdmins</group>
+        </administrator-role>
+        -->
+        <!-- Used for only single servers.  Comment out for Collective Member-->
+
+    <httpEndpoint id="defaultHttpEndpoint" host="*" httpPort="9443" httpsPort="${bootstrap.https.port}">
+            <sslOptions sslRef="defaultSSLConfig" />
+            <httpOptions removeServerHeader="true" />
+    </httpEndpoint>
+
+
+	<logging logDirectory="/wslogs/${APP_SERVER_NAME}" maxFileSize="200" maxFiles="14" traceFileName="trace.log" traceFormat="BASIC" traceSpecification="*=INFO" messageFileName="messages.log" copySystemStreams="true" consoleLogLevel="AUDIT" suppressSensitiveTrace="true"/>
+
+	<applicationMonitor updateTrigger="polled" dropins="dropins" dropinsEnabled="false"/>
+	<applicationManager autoExpand="true"/> 
+
+	<sslDefault sslRef="defaultSSLConfig" sslProtocol="TLSv1.2"/>
+    <ssl id="defaultSSLConfig" keyStoreRef="defaultKeyStore" trustStoreRef="defaultTrustStore"  sslProtocol="TLSv1.2" securityLevel="HIGH" clientAuthenticationSupported="true" />
+	<ssl id="LDAPSSLSettings" keyStoreRef="defaultKeyStore" trustStoreRef="defaultTrustStore" sslProtocol="TLSv1.2" securityLevel="HIGH" clientAuthentication="false"/>
+	<keyStore id="defaultKeyStore" location="${shared.resource.dir}/security/key.p12" password="{aes}redacted" type="pkcs12"/>
+	<keyStore id="defaultTrustStore" location="${shared.resource.dir}/security/trust.p12" password="{aes}redacted" type="pkcs12"/>
+	<ltpa keysFileName="${server.config.dir}/resources/security/ltpa.keys" keysPassword="{aes}redacted"  monitorInterval="24h" />
+
+	<library description="DB2 JDBC Library" id="DB2JDBCLib" name="DB2JDBCLib">
+		<fileset dir="${shared.resource.dir}/jdbc/db2" includes="*.jar"/>
+	</library>
+	<library description="MS SQL Server JDBC Library" id="MSSQLJDBCLib" name="MSSQLJDBCLib">
+		<fileset dir="${shared.resource.dir}/jdbc/mssql" includes="*.jar"/>
+	</library>
+	<library description="Oracle JDBC Library" id="OracleJDBCLib" name="OracleJDBCLib">
+		<fileset dir="${shared.resource.dir}/jdbc/oracle" includes="*.jar"/>
+	</library>
+
+	<jdbcDriver id="DB2Provider" libraryRef="DB2JDBCLib"/>
+	<jdbcDriver id="MSSQLProvider" libraryRef="MSSQLJDBCLib"/>
+	<jdbcDriver id="OracleProvider" libraryRef="OracleJDBCLib"/>
+		
+	<ldapRegistry id="LDAPUserRegistry" realm="my.server.com:636" host="my.server.com" port="636" ignoreCase="true" baseDN="DC=my,DC=server,DC=com" bindDN="admin@my.server.com" bindPassword="{aes}redacted" ldapType="Microsoft Active Directory" sslEnabled="true" sslRef="LDAPSSLSettings">
+		<activedFilters userFilter="(&amp;(sAMAccountName=%v)(objectcategory=user))" groupFilter="(&amp;(cn=%v)(objectcategory=group))" userIdMap="user:sAMAccountName" groupIdMap="*:cn" groupMemberIdMap="memberOf:member"/>
+	</ldapRegistry>
+		
+	<webContainer disableXPoweredBy="true" trusted="true" serveServletsByClassnameEnabled="false"/>
+	<webAppSecurity logoutOnHttpSessionExpire="true" httpOnlyCookies="true" ssoRequiresSSL="true" useAuthenticationDataForUnprotectedResource="true"/>
+	<authentication cacheEnabled="true" />
+	<authCache initialSize="25000" maxSize="25000" timeout="600s"/>
+
+	<httpSession allowOverflow="false" invalidationTimeout="30m" maxInMemorySessionCount="1000" cookiesEnabled="true" sslTrackingEnabled="false" cookieSecure="true" cookieHttpOnly="true" cookieMaxAge="-1"/>	
+	<httpDispatcher enableWelcomePage="false" />	
+	
+    <include location="${shared.config.dir}/collective.xml" optional="true" onConflict="MERGE"/>
+    <include location="${server.config.dir}/cluster.xml" optional="true" onConflict="MERGE"/>
+    <include location="${shared.config.dir}/scaling.xml" optional="true" onConflict="MERGE"/>
+    <include location="${shared.config.dir}/health.xml" optional="true" onConflict="MERGE"/>
+    <include location="${server.config.dir}/application1.xml" optional="true" onConflict="MERGE"/>
+    <include location="${server.config.dir}/oidc.xml" optional="true" onConflict="MERGE"/> 
+		
+</server>
