@@ -1,0 +1,1 @@
+jdbc/mq/security resource holder file. Place the necessary files here.
