@@ -1,0 +1,49 @@
+  - name: Check keystores for cert validity
+    hosts: 
+      - all
+    become: yes
+    become_method: sudo
+   
+    tasks:
+    
+    - name: Find java
+      find:
+        paths: '/usr/WebSphere,/usr/WebSphere70,/usr/WebSphere80,/usr/WebSphere85,/usr/WebSphere90,/usr/HTTPServer,/usr/HTTPServer85'
+        patterns: 'java'
+        recurse: True
+      register: java_path
+    - fail:
+        msg: 'Could not find java'
+      when: java_path.matched == 0
+
+    - name: Find jks keystores
+      find:
+        paths: '{{ keystorePaths }}'
+        patterns: '*.jks'
+        recurse: True
+      register: keystores_jks
+
+    - name: Find pkcs12 keystores 
+      find:
+        paths: '{{ keystorePaths }}'
+        patterns: '*.p12'
+        recurse: True
+      register: keystores_pkcs12
+
+    - name: copy over java archiive
+      copy:
+        src: checkCertificateValidity.jar
+        dest: ~wsadmin/scripts/checkCertificateValidity.jar
+        owner: wsadmin
+        group: wsadm 
+        mode: '0750'
+        
+    - name: check jks keystores
+      command: '{{ java_path.files[0].path }} -cp ~wsadmin/scripts/checkCertificateValidity.jar com.ibm.security.certificate.CheckValidity {{ item.path }} jks {{ password }}'
+      with_items: 
+        - "{{ keystores_jks.files }}"
+        
+    - name: check pkcs12 keystores
+      command: '{{ java_path.files[0].path }} -cp ~wsadmin/scripts/checkCertificateValidity.jar com.ibm.security.certificate.CheckValidity {{ item.path }} pkcs12 {{ password }}'
+      with_items: 
+        - "{{ keystores_pkcs12.files }}"
