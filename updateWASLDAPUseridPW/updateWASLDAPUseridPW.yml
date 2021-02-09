@@ -1,0 +1,37 @@
+  - name: Update ldap userid and password
+    hosts: 
+      - all
+    become: yes
+    become_method: sudo
+   
+    tasks:
+
+    - name: Find tWAS profiles
+      find:
+        paths: "/usr/WebSphere/WAS8.5/AppServer85/profiles,/usr/WebSphere/AppServer/profiles,/usr/WebSphere/AppServer85/profiles,/usr/WebSphere/AppServer90/profiles,/usr/WebSphere/AppServer70/profiles,/usr/WebSphere70/AppServer/profiles,/usr/WebSphere80/AppServer/profiles,/usr/WebSphere85/AppServer/profiles,/usr/WebSphere855/AppServer/profiles,/usr/WebSphere9/AppServer/profiles,/usr/WebSphere90/AppServer/profiles"
+        recurse: False
+        file_type: directory
+      register: was_profiles
+    - fail:
+        msg: 'WAS may not be installed and configured; could not find any profiles'
+      when: was_profiles.matched == 0
+ 
+    - name: copy over jython script to run under wsadmin.sh
+      copy:
+        src: changeLDAPUseridPw.py
+        dest: ~wsadmin/scripts/changeLDAPUseridPw.py
+        owner: wsadmin
+        group: wsadm 
+        mode: '0750'
+
+    - name: Change userid and password using wsadmin
+      shell: "{{ item.path }}/bin/wsadmin.sh -f ~wsadmin/scripts/changeLDAPUseridPw.py {{ newUserId }} dev:{{ devPw }},sit:{{ sitPW }},uat:{{ uatPw }},prod:{{ prodPw }}"
+      args:
+         chdir: "{{ item.path }}/bin"
+      with_items:
+        - "{{ was_profiles.files }}"
+      register: result
+      failed_when:
+        - result.rc > 0
+        - '"successful" not in result.stdout'
+        
